@@ -10,13 +10,9 @@ module.exports = {
       },
       first_name: {
         type: Sequelize.STRING,
-        allowNull: false,
-        validate: {
-          notNull: { msg: "foo is required" },
-        },
       },
       last_name: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
       },
       country_code: {
         type: Sequelize.STRING
