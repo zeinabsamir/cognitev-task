@@ -1,15 +1,17 @@
 const express = require('express');
 const router = express.Router();
-const User = require('../models').User;
-const isoCountries = require('./CountriesCode')
+const jwt = require("jsonwebtoken");
 const _ = require('lodash');
 const { check, validationResult } = require('express-validator');
+
+const User = require('../models').User;
+const isoCountries = require('./CountriesCode');
 
 router.get('/', (req, res, next) => {
    res.json("hello from users");
 });
 
-router.post('/',[
+router.post('/add-user',[
         check('first_name')
         .exists().withMessage('should not be empty'),
         check('last_name')
@@ -47,7 +49,7 @@ router.post('/',[
         }).matches(/([12]\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]))/).withMessage('must be in formate yyyy-mm-dd'),
         check('avatar')
         .exists().withMessage('should not be empty')
-        .matches(/\.(gif|jpg|jpeg|png)$/).withMessage('must be a valid formate'),
+        .matches(/\.(gif|jpg|jpeg|png)$/).withMessage('Invalid content type'),
         check('email')
         .isEmail().withMessage('should be a valid E-mail formate')
         .custom(value => {
@@ -85,5 +87,17 @@ router.post('/',[
       
         User.create(req.body).then(user => res.status(201).json(user));
   });
+
+router.post("/login", (req, res) => {
+   const { phone_number, password } = req.body;
+  
+   let payload = { phone_number, password };
+   let token = jwt.sign(payload, "secret");
+
+   res.status(200).json({ token });
+       
+     
+   
+ });  
 
 module.exports = router;
