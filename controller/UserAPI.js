@@ -91,13 +91,11 @@ router.post('/add-user',[
 router.post("/login", (req, res) => {
    const { phone_number, password } = req.body;
   
-   let payload = { phone_number, password };
+   let payload = { phone_number };
    let token = jwt.sign(payload, "secret");
 
    res.status(200).json({ token });
-       
-     
-   
+
  });  
 
 module.exports = router;
