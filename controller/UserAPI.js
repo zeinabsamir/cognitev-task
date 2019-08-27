@@ -20,8 +20,10 @@ router.post('/add-user',[
         check('country_code')
            .exists().withMessage('should not be empty')
            .custom((value) => {
-               if (!isoCountries.hasOwnProperty(value)) {
+               if (!isoCountries.hasOwnProperty(value.toUpperCase())) {
                   throw new Error('Not a valid country code');
+           } else {
+              return true;
            }
        }),
         check('phone_number')
@@ -34,7 +36,9 @@ router.post('/add-user',[
             return User.findOne({where: {phone_number:value}}).then(user => {
               if (user) {
                  throw new Error('phone number already in use');
-              }
+              }else {
+               return true;
+            }
             });
           }),
         check('gender')
