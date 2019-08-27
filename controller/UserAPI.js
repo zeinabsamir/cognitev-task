@@ -6,6 +6,7 @@ const { check, validationResult } = require('express-validator');
 
 const User = require('../models').User;
 const isoCountries = require('./CountriesCode');
+const verfiyToken = require("./verify").verfiyToken;
 
 router.get('/', (req, res, next) => {
    res.json("hello from users");
@@ -17,13 +18,12 @@ router.post('/add-user',[
         check('last_name')
         .exists().withMessage('should not be empty'),
         check('country_code')
-        .exists().withMessage('should not be empty')
-        .custom(value => {
-              if (!isoCountries.hasOwnProperty(value.toUpperCase())) {
-                 throw new Error('Not a valid country code');
-              }
-            
-          }),
+           .exists().withMessage('should not be empty')
+           .custom((value) => {
+               if (!isoCountries.hasOwnProperty(value)) {
+                  throw new Error('Not a valid country code');
+           }
+       }),
         check('phone_number')
         .isLength({ min: 11 }).withMessage('too short')
         .isLength({ max: 15 }).withMessage('too long')
@@ -63,6 +63,7 @@ router.post('/add-user',[
 
     ], (req, res) => {
         const errors = validationResult(req);
+        console.log(errors.array());
         let err = {}
         if (!errors.isEmpty()) {
             var grouped = _.groupBy(errors.array(), 'param')
@@ -91,11 +92,67 @@ router.post('/add-user',[
 router.post("/login", (req, res) => {
    const { phone_number, password } = req.body;
   
-   let payload = { phone_number };
-   let token = jwt.sign(payload, "secret");
-
-   res.status(200).json({ token });
+    
+   User.findOne({where: {phone_number}})
+   .then(user => {
+      if(user) {
+         let payload = { phone_number };
+         let token = jwt.sign(payload, "secret"); 
+         res.status(200).json({ token }); 
+      } else {
+         res.status(401).json({ msg: "user not registered please signup first" });
+      }
+    
+   })
 
  });  
+
+ /* For task 3 the route accept in the request body user phone and token and status and check for
+   token to be authorized or not then decode token and get user phone to get the logged in user */
+ router.post("/auth-token", (req, res) => {
+
+   const user_phone = req.body.phone_number;
+   const token = req.body.token;
+   const status = req.body.status;
+
+   if (!token) {
+    return res.status(401).send("Unauthorized Request");
+  }
+
+  jwt.verify(token, "secret", function(err, decoded) {
+    if (err) return res.status(401).send("Unauthorized Request");
+
+   let decodedPhone = decoded.phone_number;
+
+   User.findOne({where: {phone_number: decodedPhone}})
+   .then(user => {
+      if(user) {
+         res.status(201).json({user, status})
+      } else {
+         res.status(401).json({msg: "You are not authorized"})
+      }
+   });
+
+  });
+
+ }); 
+/* 
+  auth-token will be send in the header along with status and bind phone_number
+   to the request object that decoded from sended token  
+*/
+ router.post("/auth", verfiyToken, (req, res) => {
+
+   const user_phone = req.phone_number;
+   
+   User.findOne({where: {phone_number: user_phone}})
+   .then(user => {
+      if(user) {
+         res.status(201).json(user)
+      } else {
+         res.status(401).json({msg: "You are not authorized"})
+      }
+   });
+
+ }); 
 
 module.exports = router;

@@ -11,7 +11,7 @@ const verfiyToken = (req, res, next) => {
   jwt.verify(token, "secret", function(err, decoded) {
     if (err) return res.status(401).send("Unauthorized Request");
 
-    req.accountId = decoded.accountId;
+    req.phone_number = decoded.phone_number;
     next();
   });
 };
